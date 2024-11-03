@@ -33,7 +33,10 @@ def find(self, value: str, default = None) -> Any | None:
 def decorator(self, *args, **kwargs):
     if len(args) > 0:
         if hasattr(args[0], "__call__"):
-            setattr(self, args[0].__name__, MethodType(args[0], self))
+            if args[0].__name__.startswith("__"):
+                self.__dict__[args[0].__name__] = MethodType(args[0], self)
+            else:
+                setattr(self, args[0].__name__, MethodType(args[0], self))
             return self
     o = deepcopy(self)
     o.new(*args, **kwargs)
@@ -49,7 +52,7 @@ def protoToDict(proto: type) -> dict:
     return o
 
 # Fonction permettant de créer les objets.
-def proto(name: str, methodsOrProto: dict[str, Callable] = {}) -> type:
+def proto(name: str, methodsOrProto: dict[str, Callable[[], Any]] = {}) -> type:
     if hasattr(methodsOrProto, "__isProto__") and getattr(methodsOrProto, "__isProto__", False) == True:
         methodsOrProto = protoToDict(methodsOrProto)
     o = type(name, (object,), {
